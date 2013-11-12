@@ -152,7 +152,7 @@ function Actor() {
       if (Math.random() < 0.6) {
         this.loc = house[this.loc.exits.pick()];
       }
-      //console.log(this.name + ' went to the ' + this.room() + '.');
+      if (this.name === camera.name) console.log(this.name + ' went to the ' + this.room() + '.');
     },
     room: function() {
       return this.loc.name;
@@ -163,9 +163,9 @@ function Actor() {
       // true if every player is now done
       var dones = _.pluck(players, '_done');
       var allDone = _.every(dones);
-      if (allDone) {
-        setTimeout(tick, 1000*12);
-      }
+      //if (allDone) {
+        setTimeout(tick, 100);
+     // }
     },
     commentObject: function() {
       var objects = this.loc.objects;
@@ -226,6 +226,8 @@ for (var i=0; i<6; i++) {
   players.push(new Actor());
 }
 
+var camera = players.pick();
+
 var looked = [
   'seemed',
   'looked',
@@ -258,7 +260,7 @@ var flinched = [
 function dialogue(actor1, actor2) {
   var dfd = _.Deferred();
   var random = Math.random();
-  if (random < 0.5) {
+  if (random < 1.5) {
     // do nothing
     dfd.resolve('');
   }
@@ -271,12 +273,12 @@ function dialogue(actor1, actor2) {
 
 function solo(actor1) {
   var random = Math.random();
-  if (random < 0.75) {
+  if (random < -0.75) {
     // do nothing
   }
   else {
     var random2 = Math.random();
-    if (random2 < 0.45) {
+    if (random2 < 0.5) {
       actor1.commentObject();
     }
     else if (random2 < 1.75) {
@@ -299,11 +301,16 @@ function newRoom(actor) {
 
 function tick() {
   var dialogues = [];
+  // Move all players to new room
   _.each(players, function(player) {
     player._done = false;
     player.leaveRoom();
   });
-  _.each(players, function(player) {
+  // Determine whether the camera stays or shifts
+  if (Math.random() < 0) {
+    camera = camera.pick();
+  }
+  var player = camera;
     var othersHere = _.filter(players, function(el) {
       return el.loc === player.loc && el.name !== player.name;
     });
@@ -318,7 +325,6 @@ function tick() {
       solo(player);
       player.done();
     }
-  });
 }
 
 function encounter(actor1, actor2) {
