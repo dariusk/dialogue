@@ -18,6 +18,15 @@ Array.prototype.pickRemove = function() {
   return this.splice(index,1)[0];
 };
 
+// from underscore.string
+function toSentence (array, separator, lastSeparator, serial) {
+  separator = separator || ', ';
+  lastSeparator = lastSeparator || ', and ';
+  var a = array.slice(), lastMember = a.pop();
+  if (array.length > 2 && serial) lastSeparator = _s.rtrim(separator) + lastSeparator;
+  return a.length ? a.join(separator) + lastSeparator + lastMember : lastMember;
+}
+
 var house = {
   foyer: {
            name: 'foyer',
@@ -67,21 +76,37 @@ var house = {
   breakfast: {
                name: 'breakfast nook',
                objects: ['table', 'juicer', 'toaster'],
+               actions: [
+                'drank some juice, fuck it, right? Whose house even was this?'
+               ],
                exits: ['kitchen']
              },
   garage: {
             name: 'garage',
             objects: ['BMW', 'riding lawnmower'],
+            actions: [
+              'considered getting on that lawnmower and riding it out of this place.',
+              'peered in the car door for some kind of clue as to whose house this was.',
+              'tried to jimmy the lock on the car and ended up setting off the alarm. Whoops.'
+            ],
             exits: ['patio', 'frontyard', 'greathall']
           },
   frontyard: {
                name: 'front yard',
                objects: ['lawn', 'tree'],
+               actions: [
+                 'started to climb the tree, then thought better of it.',
+                 'ran her fingers through the well-manicured grass, dreaming of better days.'
+               ],
                exits: ['living', 'foyer', 'garage']
              },
   greathall: {
                name: 'great hall',
                objects: ['family portrait', 'tribal Afghan rug'],
+               actions: [
+                 'took off her shoes, got a running start, a slid in her socks down the slick hardwood floors.',
+                 'stared down the hall, which seemed longer than it had any right to be.'
+               ],
                exits: ['library', 'bath', 'guestbed', 'masterbed']
              },
   library: {
@@ -96,11 +121,21 @@ var house = {
   guestbed: {
               name: 'guest bedroom',
               objects: ['bed', 'poster of a... Monet?', 'set of curtains'],
+              actions: [
+                'imagined what kind of people had stayed in the bed. How many people had had sex in it?',
+                'guessed that this was the most boring room in the house.'
+              ],
               exits: ['greathall']
             },
   bath: {
           name: 'bathroom',
           objects: ['toilet', 'framed photo of a fish', 'nautical themed shower curtain'],
+          actions: [
+            'relieved herself.',
+            'jiggled the toilet handle.',
+            'looked around for tampons, finding none.',
+            'was afraid, as she always was, that a murderer lay in ambush behind the shower curtain.'
+          ],
           exits: ['greathall']
         },
   masterbed: {
@@ -116,15 +151,22 @@ var house = {
 }
 
 var names = require('./first.js').names;
+var dreams = require('./dreams.js');
 
 function makeItems(num) {
   var result = [];
 
+  // Must be a single word
   var adjectives = [
     'crimson',
     'teal',
     'ostentatious',
-    'fashionable'
+    'fashionable',
+    'aquamarine',
+    'emerald',
+    'amazing',
+    'incredible',
+    'mind-blowing'
   ];
 
   var nouns = [
@@ -133,7 +175,13 @@ function makeItems(num) {
     'hat',
     'skirt',
     'necklace',
-    'phone'
+    'phone',
+    'purse',
+    'belt',
+    'watch',
+    'jacket',
+    'shirt',
+    'coat'
   ];
 
   for (var i=0; i<num; i++) {
@@ -164,7 +212,7 @@ function Actor() {
       var dones = _.pluck(players, '_done');
       var allDone = _.every(dones);
       if (allDone) {
-        setTimeout(tick, 1000*12);
+        setTimeout(tick, 1000 * 12);
       }
     },
     commentObject: function() {
@@ -190,10 +238,11 @@ function Actor() {
                     .reject(function(el) { return el.name === this.name })
                     .pluck('name')
                     .value();
-       var otherName = others.pick();
+       var otherName = others.pickRemove();
        var other = other || _.filter(players, function(el) {
          return el.name === otherName;
        })[0];
+       var cronyName = others.pick();
 
        var feelings = [
          'loved',
@@ -214,8 +263,35 @@ function Actor() {
        if (Math.random() < 0.4) thoughts += 'Why did everyone want to be like her? ';
        if (Math.random() < 0.4) thoughts += 'Just thinking about it made her want to puke. ';
        if (Math.random() < 0.4) thoughts += 'Why did she come to this stupid house party in the first place? ';
+       
+       function add(string) {
+         if (Math.random() < 0.4) return string + ' ';
+         else return '';
+       }
 
-       console.log(thoughts);
+       var ailment = [
+        'were such total bitches',
+        'never talked to her',
+        'thought they were so much better than everyone else',
+        'got better grades than her',
+        'had more money than she did',
+        'didn\'t have to try hard to be liked'
+       ].pick();
+       var school = 'She thought about school, and how ' + other.name + ' and ' + cronyName + ' ' + ailment + '. ';
+       school += add('Why did they leave whenever she entered a room?');
+       school += add('Were they jealous of her somehow? Not likely.');
+       school += add('How could that even be possible?');
+       school += add('Did they secretly like her after all? It didn\'t matter anyway.');
+       school += add('They were always laughing with their perfect friends.');
+       school += add('They walked around the school like they owned the place.');
+       school += add('They were queen bees and they knew it.');
+       school += add('They never invited her to parties; it was a fluke she ended up at this one.');
+       school += add('They always got they wanted. Always.');
+       school += add('But life was probably hard for them too, in its own way. It always is.');
+       school += add('Did they suspect she thought about them so much?');
+
+       var out = [thoughts, school].pick();
+       console.log(out);
 
      }
   }
@@ -225,6 +301,10 @@ var players = [];
 for (var i=0; i<6; i++) {
   players.push(new Actor());
 }
+
+// intro
+console.log(toSentence(_.pluck(players, 'name')) + ' found themselves dropped off at the same party at the same time by their respective mothers. How awkward.');
+
 
 var looked = [
   'seemed',
@@ -252,7 +332,11 @@ var flinched = [
   'beamed',
   'flinched',
   'squirmed',
-  'sighed'
+  'sighed',
+  'chuckled',
+  'laughed',
+  'yawned',
+  'yelled'
 ];
 
 function dialogue(actor1, actor2) {
@@ -263,15 +347,27 @@ function dialogue(actor1, actor2) {
     dfd.resolve('');
   }
   else {
-    var funcs = [generate, generateBest, generateFav, stare, stare, stare];
+    var funcs = [generate, generateBest, generateFav, stare, stare, stare, dream];
     funcs.pick().call(null, actor1, actor2, dfd);
   }
   return dfd.promise();
 }
 
+function dream(actor1, actor2, dfd) {
+  var pre = [
+    actor2.name + ' looked directly at ' + actor1.name + '. "I had the weirdest dream," she said.',
+    actor2.name + ' stiffened and began to ramble, not noticing ' + actor1.name + ', as if in a fugue state.',
+    '"' + actor2.name + ', what did you dream about last night?" asked ' + actor1.name + '. ' + actor2.name + ' seemed wary, but her face softened.',
+    '"Dreams," ' + actor1.name + ' said. "Tell me about your dreams." ' + actor2.name + ' almost said nothing, but thought better of it.',
+    actor2.name + ' was crying. ' + actor1.name + ' acted on instinct. "Tell me all about it." she said. ' + actor2.name + ' obliged in an unbecoming outpouring.',
+  ].pick();
+  encounter(actor1, actor2);
+  console.log(pre + '\n"' + dreams.pick() + '"');
+  dfd.resolve('');
+}
 function solo(actor1) {
   var random = Math.random();
-  if (random < 0.75) {
+  if (random < 0.2) {
     // do nothing
   }
   else {
@@ -291,7 +387,10 @@ function newRoom(actor) {
     'After some time, ' + actor.name + ' found herself in the ' + actor.loc.name + '.',
     actor.name + ' entered the ' + actor.loc.name + '.',
     'Nobody was in the ' + actor.loc.name + ', so ' + actor.name + ' found herself uncharacteristically at ease.',
-    '"Perfect, I\'ve got the ' + actor.loc.name + ' all to myself," thought ' + actor.name + '.'
+    '"Perfect, I\'ve got the ' + actor.loc.name + ' all to myself," thought ' + actor.name + '.',
+    'The ' + actor.loc.name + ' was empty. Finally, ' + actor.name + ' thought, somewhere she could think.',
+    actor.name + ' looked around the ' + actor.loc.name + '.',
+    actor.name + ' breathed deeply and took in sights of the ' + actor.loc.name + '.'
   ];
 
   console.log(news.pick());
@@ -327,7 +426,11 @@ function encounter(actor1, actor2) {
     actor1.name + ' encountered ' + actor2.name + ' in the ' + actor1.loc.name + '.',
     actor1.name + ' and ' + actor2.name + ' ran into each other in the ' + actor1.loc.name + '.',
     actor1.name + ' entered the ' + actor1.loc.name + '. ' + actor2.name + ' was there, as if waiting.',
-    'As ' + actor1.name + ' entered the ' + actor1.loc.name + ', she saw ' + actor2.name + ' making trouble.'
+    'As ' + actor1.name + ' entered the ' + actor1.loc.name + ', she saw ' + actor2.name + ' making trouble.',
+    actor1.name + ' found ' + actor2.name + ' in the ' + actor1.loc.name + '.',
+    actor1.name + ' entered the ' + actor1.loc.name + ' to find ' + actor2.name + ' standing there.',
+    actor1.name + ' walked into the ' + actor1.loc.name + ' and saw ' + actor2.name + '. Great.',
+    'The ' + actor1.loc.name + ' held two items of interest to ' + actor1.name + ': the ' + actor1.loc.objects.pick() + ' and ' + actor2.name + '.'
   ];
 
   console.log(encounters.pick());
@@ -592,9 +695,21 @@ function talkAboutObject(name, object) {
     'The ' + object + ' caught her eye. She thought it was the ugliest thing she\'d ever seen.',
     'She stared at the ' + object + ' uncomprehendingly.',
     '"Wow, check out that ' + object + '," she said to no one in particular.',
-    'She dutifully avoided the ' + object + ' out of some primal respect for its otherness.'
+    'She dutifully avoided the ' + object + ' out of some primal respect for its otherness.',
+    'The ' + object + ' reminded her of her mother. Barf.',
+    'She noticed the ' + object + '. Kinda tacky.',
+    'The next thing she saw was the ' + object + ', which left her feeling disquieted.'
   ];
-  console.log(talks.pick());
+  var posts = [
+    'Why she noticed in the first place was beyond her.',
+    'She didn\'t give it a second thought.',
+    'She was hoping it would distract her, if for some brief moment, from her life.',
+    'Things. The house was full of things. When she got old enough to have a house, she\'d own nothing.',
+    'Part of her, a larger part than she cared to admit, wanted to smash it.',
+    'She wished the booze would kick in.',
+    'She heard a noise from somewhere else in the house.'
+  ];
+  console.log(talks.pick() + ' ' + posts.pick());
 }
 
 tick();
